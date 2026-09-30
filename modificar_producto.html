@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modificar Producto - InventarioPro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container mt-4">
+
+    <nav>
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="panel_control.html">Panel de Control</a></li>
+        <li class="breadcrumb-item"><a href="gestion_productos.html">Productos</a></li>
+        <li class="breadcrumb-item active">Editar Producto</li>
+      </ol>
+    </nav>
+
+    <h2>Modificar Producto <span class="badge bg-warning text-dark" id="etiquetaSku"></span></h2>
+
+    <div id="error" class="alert alert-danger d-none"></div>
+
+    <form class="card card-body" onsubmit="return pedirConfirmacion()">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Nombre del Producto</label>
+          <input type="text" id="nombre" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Código SKU</label>
+          <!-- disabled: el SKU no se puede cambiar -->
+          <input type="text" id="sku" class="form-control" disabled>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Categoría</label>
+        <select id="categoria" class="form-select">
+          <option>Periféricos</option>
+          <option>Soporte Técnico</option>
+          <option>Facturación</option>
+          <option>Ventas</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label d-block">Disponibilidad</label>
+        <div class="btn-group">
+          <input type="radio" class="btn-check" name="estado" id="e1" value="En Stock">
+          <label class="btn btn-outline-primary" for="e1">En Stock</label>
+          <input type="radio" class="btn-check" name="estado" id="e2" value="Agotado">
+          <label class="btn btn-outline-primary" for="e2">Agotado</label>
+        </div>
+      </div>
+
+      <div class="mb-3" style="max-width: 200px;">
+        <label class="form-label">Cantidad</label>
+        <input type="number" id="cantidad" class="form-control" min="0">
+      </div>
+
+      <div>
+        <button type="submit" class="btn btn-warning">Actualizar Cambios</button>
+        <a href="gestion_productos.html" class="btn btn-outline-primary">Cancelar</a>
+      </div>
+    </form>
+
+  </div>
+
+  <!-- Ventana (modal) de confirmacion -->
+  <div class="modal fade" id="modalConfirmar" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirmar cambios</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">¿Desea actualizar este producto?</div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-warning" onclick="actualizar()">Sí, actualizar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  if (localStorage.getItem("sesion") == null) {
+    window.location.href = "index.html";
+  }
+
+  // Sacamos el SKU de la direccion (?sku=PROD-001)
+  var parametros = new URLSearchParams(window.location.search);
+  var skuBuscado = parametros.get("sku");
+
+  var productos = JSON.parse(localStorage.getItem("productos")) || [];
+  var posicion = -1; // posicion del producto en la lista
+
+  // Buscamos el producto
+  for (var i = 0; i < productos.length; i++) {
+    if (productos[i].sku == skuBuscado) {
+      posicion = i;
+    }
+  }
+
+  if (posicion == -1) {
+    alert("Producto no encontrado");
+    window.location.href = "gestion_productos.html";
+  }
+
+  // Cargamos los datos en el formulario
+  var p = productos[posicion];
+  document.getElementById("etiquetaSku").innerHTML = "SKU: " + p.sku;
+  document.getElementById("nombre").value = p.nombre;
+  document.getElementById("sku").value = p.sku;
+  document.getElementById("categoria").value = p.categorias[0];
+  document.getElementById("cantidad").value = p.cantidad;
+  if (p.estado == "Agotado") {
+    document.getElementById("e2").checked = true;
+  } else {
+    document.getElementById("e1").checked = true;
+  }
+
+  // Valida y abre el modal de confirmacion
+  function pedirConfirmacion() {
+    if (document.getElementById("nombre").value == "") {
+      var error = document.getElementById("error");
+      error.innerHTML = "El nombre no puede estar vacío.";
+      error.classList.remove("d-none");
+      return false;
+    }
+    var modal = new bootstrap.Modal(document.getElementById("modalConfirmar"));
+    modal.show();
+    return false;
+  }
+
+  // Guarda los cambios
+  function actualizar() {
+    productos[posicion].nombre = document.getElementById("nombre").value;
+    productos[posicion].categorias = [document.getElementById("categoria").value];
+    productos[posicion].estado = document.querySelector("input[name='estado']:checked").value;
+    productos[posicion].cantidad = document.getElementById("cantidad").value;
+
+    localStorage.setItem("productos", JSON.stringify(productos));
+    alert("Producto actualizado");
+    window.location.href = "gestion_productos.html";
+  }
+</script>
+</body>
+</html>
